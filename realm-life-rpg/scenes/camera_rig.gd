@@ -10,22 +10,23 @@ extends Node3D
 
 @onready var camera = $Camera3D
 
-func _process(delta):
-	handle_movement(delta)
-	handle_zoom(delta)
+# Cette variable va stocker la distance de départ
+var _offset: Vector3
 
-func handle_movement(delta):
-	# Si on a une cible (le joueur), on la suit
+func _process(delta):
+	handle_zoom(delta)
 	if target_to_follow:
-		var target_pos = target_to_follow.global_position
-		# Interpolation pour fluidifier le mouvement (Lerp)
-		global_position = global_position.lerp(target_pos, delta * smoothing)
-	else:
-		# Sinon, mouvement manuel (ZQSD / WASD) pour tester
-		var input_dir = Input.get_vector("left", "right", "up", "down")
-		# On transforme l'input pour qu'il corresponde à la rotation de la caméra (45 degrés)
-		var direction = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
-		global_position += direction * move_speed * delta
+		# La position cible n'est plus "le joueur", mais "le joueur + l'écart"
+		var target_pos = target_to_follow.global_position + _offset
+		
+		# On bouge le Rig doucement vers cette nouvelle position
+		global_position = global_position.lerp(target_pos, smoothing * delta)
+
+func _ready():
+	# Si on a une cible, on calcule la différence de position actuelle
+	# entre le Rig et le Joueur.
+	if target_to_follow:
+		_offset = global_position - target_to_follow.global_position
 
 func handle_zoom(delta):
 	# Gestion du zoom avec la molette
